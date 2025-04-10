@@ -1,2 +1,10 @@
 # Directories
 .venv/
+__pycache__/
+src/
+tests/
+
+# Files
+.pdm-python
+pdm.lock
+pyproject.toml
