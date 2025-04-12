@@ -4,11 +4,17 @@ import numpy as np
 import random
 from skimage.feature import hog
 from sklearn.preprocessing import StandardScaler
+from time import time
+
+DATASET_PATH = "/mnt/c/Users/byoub/Downloads/data/"
+NB_VEHICLES = 10
+NB_NON_VEHICLES = 10
 
 # Charger le dataset depuis Kaggle
 def load_dataset(folder_path, label):
   dataset = []
-  for file in os.listdir(folder_path):
+  list_files = os.listdir(folder_path)
+  for file in list_files[:NB_VEHICLES if label == 1 else NB_NON_VEHICLES]:
     img_path = os.path.join(folder_path, file)
     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE) # Convertir en niveaux de gris
     img = cv2.resize(img, (64, 64)) # Redimensionner
@@ -26,20 +32,7 @@ def extract_hog_features(image):
     block_norm='L2-Hys')
   return features
 
-# Charger les images des deux classes
-vehicle_images = load_dataset("path_to_dataset/Vehicles", label=1)
-non_vehicle_images = load_dataset("path_to_dataset/Non-Vehicles", label=0)
-dataset = vehicle_images + non_vehicle_images
 
-# Normaliser les caractéristiques
-scaler = StandardScaler()
-features_matrix = np.array([data['features'] for data in dataset])
-scaled_features = scaler.fit_transform(features_matrix)
-
-# Mettre à jour le dataset avec les caractéristiques normalisées
-for i, data in enumerate(dataset): dataset[i]['features'] = tuple(scaled_features[i])
-
-# Convertir en tuple pour l'utiliser comme clé dans la Q-Table
 
 # Définition de l'environnement
 class Environment:
@@ -78,17 +71,41 @@ class QLearningAgent:
       target = reward + self.gamma * np.max(self.q_table.get(next_state, np.zeros(self.action_space)))
       self.q_table[state][action] += self.learning_rate * (target - self.q_table[state][action])
 
-# Simulation
-env = Environment(dataset)
-agent = QLearningAgent(action_space=2)
-for episode in range(10):
-  state = env.reset()
-  done = False
-  while not done:
-    action = agent.choose_action(state)
-    next_state, reward, done = env.step(action)
-    agent.update_q_value(state, action, reward, next_state)
-    state = next_state
+def simulation(dataset):
+  env = Environment(dataset)
+  agent = QLearningAgent(action_space=2)
+  print("Simulation en cours...")
+  start = time()
+  for episode in range(10):
+    state = env.reset()
+    done = False
+    while not done:
+      action = agent.choose_action(state)
+      next_state, reward, done = env.step(action)
+      agent.update_q_value(state, action, reward, next_state)
+      state = next_state
+  end = time()
+  print(f"==> FIN : Durée de la simulation: {end - start:.2f} secondes")
+  return agent
+  
 
-# Afficher la Q-Table
-print("Q-Table (partielle):", list(agent.q_table.items())[:5])
+
+if __name__ == "__main__":
+  # Charger les images des deux classes
+  print("Chargement des images...")
+  vehicle_images = load_dataset(f"{DATASET_PATH}vehicles", label=1)
+  non_vehicle_images = load_dataset(f"{DATASET_PATH}non-vehicles", label=0)
+  dataset = vehicle_images + non_vehicle_images
+
+  # Normaliser les caractéristiques
+  scaler = StandardScaler()
+  features_matrix = np.array([data['features'] for data in dataset])
+  scaled_features = scaler.fit_transform(features_matrix)
+
+  # Mettre à jour le dataset avec les caractéristiques normalisées
+  for i, data in enumerate(dataset): dataset[i]['features'] = tuple(scaled_features[i]) # Convertir en tuple pour l'utiliser comme clé dans la Q-Table
+
+  agent = simulation(dataset)
+
+  # Afficher la Q-Table
+  print("Q-Table (partielle):", list(agent.q_table.items())[:5])
