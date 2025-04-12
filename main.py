@@ -36,21 +36,6 @@ def extract_hog_features(image):
     block_norm='L2-Hys')
   return features
 
-# Charger les images des deux classes
-vehicle_images = load_dataset("path_to_dataset/Vehicles", label=1)
-non_vehicle_images = load_dataset("path_to_dataset/Non-Vehicles", label=0)
-dataset = vehicle_images + non_vehicle_images
-
-# Normaliser les caractéristiques
-scaler = StandardScaler()
-features_matrix = np.array([data['features'] for data in dataset])
-scaled_features = scaler.fit_transform(features_matrix)
-
-# Mettre à jour le dataset avec les caractéristiques normalisées
-for i, data in enumerate(dataset): dataset[i]['features'] = tuple(scaled_features[i])
-
-# Convertir en tuple pour l'utiliser comme clé dans la Q-Table
-
 # Définition de l'environnement
 class Environment:
   def __init__(self, dataset):
@@ -116,6 +101,7 @@ def get_dataset():
 
   return dataset
 
+
 def save_results(learning_rate, nb_episodes, gamma, results, type):
   # Sauvegarder les métriques de performance
   dir = f"results/{type if type == 'metrics' else type + 's'}/"
@@ -132,6 +118,7 @@ def save_results(learning_rate, nb_episodes, gamma, results, type):
   with open(path, mode="w", newline="") as file:
     json.dump(res, file, indent=4)
   print(f"=> OUTPUT RESULT: {path}")
+
 
 def simumation(dataset, learning_rate, nb_episodes, gamma):
   # Simulation
@@ -186,10 +173,8 @@ if __name__ == "__main__":
   # Affiche la Q-Table
   # print("Q-Table (partielle):", list(agent.q_table.items())[:5])
 
-  # Sauvegarde les métriques de performance
+  # Sauvegarde les métriques de performance et la Q-Table
   save_results(learning_rate=lr, nb_episodes=nb, gamma=gamma, results=all_metrics, type="metrics")
-  
-  # Sauvegarde la Q-Table
   save_results(learning_rate=lr, nb_episodes=nb, gamma=gamma, results=agent_q_table, type="q-table")
 
   print("END")
