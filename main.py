@@ -10,8 +10,8 @@ from time import time
 import datetime
 
 DATASET_PATH = "/mnt/c/Users/byoub/Downloads/data/" 
-NB_VEHICLES = 10 #664 au total
-NB_NON_VEHICLES = 10 #3900 au total
+NB_VEHICLES = 664 #664 au total
+NB_NON_VEHICLES = 3900 #3900 au total
 
 
 # Charger le dataset depuis Kaggle
@@ -22,7 +22,20 @@ def load_dataset(folder_path, label):
     img_path = os.path.join(folder_path, file)
     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE) # Convertir en niveaux de gris
     img = cv2.resize(img, (64, 64)) # Redimensionner
+
+    if img is None:
+      print(f"[WARNING] Could not load image: {img_path}")
+      continue  # Skip broken or unreadable files
+
     features = extract_hog_features(img) # Extraire les caractéristiques HOG
+    
+    if np.all(features == 0):
+      print(f"[WARNING] All-zero HOG features in: {img_path}")
+      #features += np.random.normal(0, 1e-4, size=features.shape) # Add small noise
+
+    if np.any(np.isnan(features)):
+      print(f"[ERROR] NaN found in HOG features: {img_path}")
+
     dataset.append({'features': features, 'label': label})
   return dataset
 
@@ -81,7 +94,7 @@ def get_dataset():
   vehicle_images = load_dataset(f"{DATASET_PATH}vehicles", label=1)
   print(f"=> Loaded {len(vehicle_images)} samples for class 1 (vehicles)")
   non_vehicle_images = load_dataset(f"{DATASET_PATH}non-vehicles", label=0)
-  print(f"=> Loaded {len(vehicle_images)} samples for class 0 (non-vehicles)")
+  print(f"=> Loaded {len(non_vehicle_images)} samples for class 0 (non-vehicles)")
   end_load = time()
   print("=> LOADING TIME: ", end_load - start_load, "seconds")
 
