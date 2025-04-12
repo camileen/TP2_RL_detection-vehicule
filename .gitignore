@@ -3,6 +3,7 @@
 __pycache__/
 src/
 tests/
+results*/
 
 # Files
 .pdm-python
