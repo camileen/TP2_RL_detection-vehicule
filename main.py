@@ -10,15 +10,15 @@ from time import time
 import datetime
 
 DATASET_PATH = "/mnt/c/Users/byoub/Downloads/vehicle-detection-image-set/data/" 
-NB_VEHICLES = 664 #664 au total
-NB_NON_VEHICLES = 3900 #3900 au total
+NB_VEHICLES = 156 # 8692 au total
+NB_NON_VEHICLES = 135 # 8868 au total
 
 
 # Charger le dataset depuis Kaggle
 def load_dataset(folder_path, label):
   dataset = []
   files = os.listdir(folder_path)
-  for file in files[:NB_VEHICLES if label == 1 else NB_NON_VEHICLES]:
+  for file in files[:(NB_VEHICLES if label == 1 else NB_NON_VEHICLES)]:
     img_path = os.path.join(folder_path, file)
     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE) # Convertir en niveaux de gris
     img = cv2.resize(img, (64, 64)) # Redimensionner
@@ -99,6 +99,7 @@ def get_dataset():
   print("=> LOADING TIME: ", end_load - start_load, "seconds")
 
   dataset = vehicle_images + non_vehicle_images
+  random.shuffle(dataset) # Mélanger le dataset
   
   print(f"TOTAL: Loaded {len(dataset)} samples of vehicles and non-vehicles")
   print("====== Loading done ======\n")
@@ -184,7 +185,7 @@ if __name__ == "__main__":
   all_metrics, agent_q_table = simumation(dataset=dataset, learning_rate=lr, nb_episodes=nb, gamma=gamma)
 
   # Affiche la Q-Table
-  print("Q-Table (partielle):", list(agent_q_table.items())[:2])
+  # print("Q-Table (partielle):", list(agent_q_table.items())[:2])
 
   # Sauvegarde les métriques de performance et la Q-Table
   save_results(learning_rate=lr, nb_episodes=nb, gamma=gamma, results=all_metrics, type="metrics")
