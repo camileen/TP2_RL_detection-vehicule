@@ -56,6 +56,7 @@ class Environment:
     self.current_index = 0
 
   def reset(self):
+    random.shuffle(self.dataset)  # Mélanger le dataset à chaque réinitialisation
     self.current_index = 0
     return self.dataset[self.current_index]['features']
 
@@ -90,19 +91,37 @@ class QLearningAgent:
 def get_dataset():
   # Charger les images des deux classes
   print("LOAD IMAGES...")
+
+  # Load labels.json
+  labels_path = os.path.join(DATASET_PATH, "labels.json")
+  with open(labels_path, "r") as f:
+    labels = json.load(f)
+  
   start_load = time()
-  vehicle_images = load_dataset(f"{DATASET_PATH}vehicles", label=1)
-  print(f"=> Loaded {len(vehicle_images)} samples for class 1 (vehicles)")
-  non_vehicle_images = load_dataset(f"{DATASET_PATH}non-vehicles", label=0)
-  print(f"=> Loaded {len(non_vehicle_images)} samples for class 0 (non-vehicles)")
+  dataset = []
+  for img_path, label in labels:
+    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    img = cv2.resize(img, (64, 64)) # Redimensionner
+
+    if img is None:
+      print(f"[WARNING] Could not load image: {img_path}")
+      continue  # Skip broken or unreadable files
+
+    features = extract_hog_features(img) # Extraire les caractéristiques HOG
+
+    if np.all(features == 0):
+      print(f"[WARNING] All-zero HOG features in: {img_path}")
+      #features += np.random.normal(0, 1e-4, size=features.shape) # Add small noise
+
+    if np.any(np.isnan(features)):
+      print(f"[ERROR] NaN found in HOG features: {img_path}")
+    
+    dataset.append({'features': features, 'label': label})
   end_load = time()
   print("=> LOADING TIME: ", end_load - start_load, "seconds")
-
-  dataset = vehicle_images + non_vehicle_images
-  random.shuffle(dataset) # Mélanger le dataset
-  
   print(f"TOTAL: Loaded {len(dataset)} samples of vehicles and non-vehicles")
   print("====== Loading done ======\n")
+  
 
   # Normaliser les caractéristiques
   scaler = StandardScaler()
@@ -111,8 +130,8 @@ def get_dataset():
 
   # Mettre à jour le dataset avec les caractéristiques normalisées
   for i, data in enumerate(dataset): 
-    dataset[i]['features'] = tuple(scaled_features[i]) # Convertir en tuple pour l'utiliser comme clé dans la Q-Table
-
+    dataset[i]['features'] = tuple(np.round(scaled_features[i], 1)) # Convertir en tuple pour l'utiliser comme clé dans la Q-Table
+        
   return dataset
 
 
@@ -135,7 +154,6 @@ def save_results(learning_rate, nb_episodes, gamma, results, type):
 
 
 def simumation(dataset, learning_rate, nb_episodes, gamma):
-  # Simulation
   env = Environment(dataset)
   agent = QLearningAgent(action_space=2, learning_rate=learning_rate, gamma=gamma)
 
@@ -169,7 +187,6 @@ def simumation(dataset, learning_rate, nb_episodes, gamma):
 
   end = time()
   print("=> FINISHED IN: ", end - start, "seconds")
-
   return all_metrics, agent.q_table
 
 
@@ -179,7 +196,7 @@ if __name__ == "__main__":
   
   # Simulation
   lr = 0.1
-  nb = 10 
+  nb = 5
   gamma = 0.9
 
   all_metrics, agent_q_table = simumation(dataset=dataset, learning_rate=lr, nb_episodes=nb, gamma=gamma)
