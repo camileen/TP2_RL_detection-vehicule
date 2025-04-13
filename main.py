@@ -9,9 +9,10 @@ import json
 from time import time
 import datetime
 
-DATASET_PATH = "/mnt/c/Users/byoub/Downloads/vehicle-detection-image-set/data/" 
-NB_VEHICLES = 156 # 8692 au total
-NB_NON_VEHICLES = 135 # 8868 au total
+DATASET_PATH = "/mnt/c/Users/byoub/Downloads/data/" 
+NB_VEHICLES = 8792 # 8792 au total
+NB_NON_VEHICLES = 8968 # 8968 au total
+NB_Q_TABLES = 10
 
 
 # Charger le dataset depuis Kaggle
@@ -144,7 +145,14 @@ def save_results(learning_rate, nb_episodes, gamma, results, type):
   res = None
   if type == "q-table":
     # Convert keys to strings because JSON keys must be strings
-    res = {str(state): list(values) for state, values in results.items()}
+    # res = {str(state): list(values) for state, values in results.items()}
+    res = {}
+    i = 0
+    for state, values in results.items():
+      if i < NB_Q_TABLES:
+        res[str(state)] = list(values)
+        i += 1
+      else: continue
   else:
     res = results
 
@@ -153,7 +161,7 @@ def save_results(learning_rate, nb_episodes, gamma, results, type):
   print(f"=> OUTPUT RESULT: {path}")
 
 
-def simumation(dataset, learning_rate, nb_episodes, gamma):
+def simulation(dataset, learning_rate, nb_episodes, gamma):
   env = Environment(dataset)
   agent = QLearningAgent(action_space=2, learning_rate=learning_rate, gamma=gamma)
 
@@ -190,7 +198,7 @@ def simumation(dataset, learning_rate, nb_episodes, gamma):
 
   end = time()
   print("=> FINISHED IN: ", end - start, "seconds")
-  return all_metrics, agent.q_table
+  return all_metrics, agent.q_table, all_rewards
 
 
 if __name__ == "__main__":
@@ -199,10 +207,10 @@ if __name__ == "__main__":
   
   # Simulation
   lr = 0.1
-  nb = 5
-  gamma = 0.9
+  nb = 10
+  gamma = 0.1
 
-  all_metrics, agent_q_table, all_rewards = simumation(dataset=dataset, learning_rate=lr, nb_episodes=nb, gamma=gamma)
+  all_metrics, agent_q_table, all_rewards = simulation(dataset=dataset, learning_rate=lr, nb_episodes=nb, gamma=gamma)
 
   # Affiche la Q-Table
   # print("Q-Table (partielle):", list(agent_q_table.items())[:2])
