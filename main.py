@@ -9,7 +9,7 @@ import json
 from time import time
 import datetime
 
-DATASET_PATH = "/mnt/c/Users/byoub/Downloads/data/" 
+DATASET_PATH = "/mnt/c/Users/byoub/Downloads/vehicle-detection-image-set/data/" 
 NB_VEHICLES = 664 #664 au total
 NB_NON_VEHICLES = 3900 #3900 au total
 
@@ -118,7 +118,7 @@ def get_dataset():
 def save_results(learning_rate, nb_episodes, gamma, results, type):
   # Sauvegarder les métriques de performance
   dir = f"results/{type if type == 'metrics' else type + 's'}/"
-  filename = f"{type}_{learning_rate}-{nb_episodes}-{gamma}_{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+  filename = f"{type}_{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}_{learning_rate}-{nb_episodes}-{gamma}.json"
   path = os.path.join(dir, filename)
 
   res = None
@@ -184,7 +184,7 @@ if __name__ == "__main__":
   all_metrics, agent_q_table = simumation(dataset=dataset, learning_rate=lr, nb_episodes=nb, gamma=gamma)
 
   # Affiche la Q-Table
-  # print("Q-Table (partielle):", list(agent.q_table.items())[:5])
+  print("Q-Table (partielle):", list(agent_q_table.items())[:2])
 
   # Sauvegarde les métriques de performance et la Q-Table
   save_results(learning_rate=lr, nb_episodes=nb, gamma=gamma, results=all_metrics, type="metrics")

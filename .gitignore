@@ -9,3 +9,4 @@ results*/
 .pdm-python
 pdm.lock
 pyproject.toml
+labels.json
