@@ -137,7 +137,7 @@ def get_dataset():
 
 def save_results(learning_rate, nb_episodes, gamma, results, type):
   # Sauvegarder les métriques de performance
-  dir = f"results/{type if type == 'metrics' else type + 's'}/"
+  dir = f"results/{type + 's' if type == 'q-table' else type}/"
   filename = f"{type}_{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}_{learning_rate}-{nb_episodes}-{gamma}.json"
   path = os.path.join(dir, filename)
 
@@ -158,11 +158,12 @@ def simumation(dataset, learning_rate, nb_episodes, gamma):
   agent = QLearningAgent(action_space=2, learning_rate=learning_rate, gamma=gamma)
 
   all_metrics = []
+  all_rewards = []
 
   print("START SIMULATION...")
   start = time()
   for episode in range(nb_episodes):
-    y_true, y_prediction = [], []
+    y_true, y_prediction, rewards = [], [], []
     state = env.reset()
     done = False
     while not done:
@@ -171,6 +172,7 @@ def simumation(dataset, learning_rate, nb_episodes, gamma):
 
       y_prediction.append(action)
       y_true.append(env.dataset[env.current_index - 1]['label'])
+      rewards.append(reward)
 
       agent.update_q_value(state, action, reward, next_state)
       state = next_state
@@ -183,6 +185,7 @@ def simumation(dataset, learning_rate, nb_episodes, gamma):
       "f1_score": f1_score(y_true, y_prediction, zero_division=0)
     }
     all_metrics.append(metrics)
+    all_rewards.append(sum(rewards))
     print(f"Episode {episode + 1}/{nb_episodes} - Accuracy: {metrics['accuracy']:.2f} - Precision: {metrics['precision']:.2f} - Recall: {metrics['recall']:.2f} - F1 Score: {metrics['f1_score']:.2f}")
 
   end = time()
@@ -199,7 +202,7 @@ if __name__ == "__main__":
   nb = 5
   gamma = 0.9
 
-  all_metrics, agent_q_table = simumation(dataset=dataset, learning_rate=lr, nb_episodes=nb, gamma=gamma)
+  all_metrics, agent_q_table, all_rewards = simumation(dataset=dataset, learning_rate=lr, nb_episodes=nb, gamma=gamma)
 
   # Affiche la Q-Table
   # print("Q-Table (partielle):", list(agent_q_table.items())[:2])
@@ -207,5 +210,6 @@ if __name__ == "__main__":
   # Sauvegarde les métriques de performance et la Q-Table
   save_results(learning_rate=lr, nb_episodes=nb, gamma=gamma, results=all_metrics, type="metrics")
   save_results(learning_rate=lr, nb_episodes=nb, gamma=gamma, results=agent_q_table, type="q-table")
+  save_results(learning_rate=lr, nb_episodes=nb, gamma=gamma, results=all_rewards, type="rewards")
 
   print("END")
