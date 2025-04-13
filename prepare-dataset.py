@@ -21,7 +21,11 @@ import random
 import json
 
 DATA_PATH = "/mnt/c/Users/byoub/Downloads/data"
-NB_IMG_PER_CLASS = 100
+
+NB_VEHICLES = 8792 # 8692 au total
+NB_NON_VEHICLES = 8968 # 8868 au total
+
+NB_TOTAL_IMG = NB_VEHICLES + NB_NON_VEHICLES
 
 if __name__ == "__main__":
   vehicles_path = os.path.join(DATA_PATH, "vehicles")
@@ -31,7 +35,7 @@ if __name__ == "__main__":
   random.shuffle(vehicles)  # Shuffle the vehicle images
   non_vehicles = os.listdir(non_vehicles_path)
   random.shuffle(non_vehicles)  # Shuffle the non-vehicle images
-  all_img_files = vehicles[:NB_IMG_PER_CLASS] + non_vehicles[:NB_IMG_PER_CLASS]
+  all_img_files = vehicles[:NB_VEHICLES] + non_vehicles[:NB_NON_VEHICLES]
 
   random.shuffle(all_img_files)
 
@@ -47,7 +51,7 @@ if __name__ == "__main__":
       os.rename(os.path.join(vehicles_path, img_path), new_img_path)
     #os.rename(os.path.join(non_vehicles_path if img_path[:5] == "extra" or img_path[:5] == "image" else vehicles_path, img_path), new_img_path)  # Deplace AND rename the file
     print(f"Moved {img_path} to {new_img_path}")
-    if i == NB_IMG_PER_CLASS - 1:
+    if i == NB_TOTAL_IMG - 1: # Useful when less images are needed
       continue
 
   # Save the labels to a JSON file
